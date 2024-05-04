@@ -4,6 +4,10 @@
     overflow-x: auto;
 }
 
+.user-search {
+    padding: .5rem;
+}
+
 .user-table {
     td{
         vertical-align: middle;
