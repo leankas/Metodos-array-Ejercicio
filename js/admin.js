@@ -68,18 +68,71 @@ const users = [{
   },
 ];
 
+
 const tableHTML = document.getElementById("table-container")
 //obtener el body de la tabla
 const tableBodyHTML = document.getElementById("table-body")
+const totalHTML = document.getElementById('total')
+// Obtener el formulario del HTML
+const userFormHTML = document.querySelector('#user-form');
 
-console.dir(tableBodyHTML)
+let userButtonsEdit;
+
+renderUsers(users)
+
+
+
+                             //evento sin on
+userFormHTML.addEventListener("submit", (evento) => {
+        //.preventDefault para que no se refresee la pagina
+  evento.preventDefault()
+  
+  const el = evento.target.elements
+ 
+  if(el["password-repeat"].value !== el.password.value){
+    Swal.fire("Error", "Las contraseñas no coinciden", "warning")
+    return //Evito que se me ejecuten las siguientes lineas si se ingreso a este if
+  }
+
+  const nuevoUsuario = {
+    id: crypto.randomUUID(),
+    fullname: el.fullname.value,
+    email: el.email.value,
+    password: el.password.value,
+    location: el.location.value,
+    image: el.image.value,
+    //transformo la fecha obtenida 2024-03-22 en un timestamp en milisegundos
+    bornDate: new  Date( el.bornDate.value ).getTime(),
+    // Obtengo el valor checked para obtener un booleano true o false
+    active: el.active.checked,
+    // Tomo el valor como un tipo numerico
+    age: el.age.valueAsNumber
+  }
+
+  users.push(nuevoUsuario)
+  renderUsers(users)
+
+  console.log(nuevoUsuario)
+  // limpiamos los input del formulario
+  userFormHTML.reset()
+
+  //Hacemos foco en el primer input del formulario 
+  el.fullname.focus();
+
+
+})
+
 
 
 function renderUsers(arrayUsers) {
 //Cadda vez que llamamos la funcion renderUsers limpiamos el body dee la tabla y volvemos a pintar
 tableBodyHTML.innerHTML = '';  
 
+let total = 0;
+
 arrayUsers.forEach((user) => {
+
+    total += user.age;
 
     tableBodyHTML.innerHTML +=  `<tr>
                               <td class="user-image">
@@ -88,11 +141,86 @@ arrayUsers.forEach((user) => {
                               <td class="user-name">${user.fullname}</td>
                               <td class="user-email">${user.email}</td>
                               <td class="user-location">${user.location}</td>
-                              <td class="user-actions"></td>
+                              <td class="user-actions">
+                                <button class="btn btn-danger btn-sm" onclick="deleteUser('${user.id}')"><i class="fa-solid fa-trash"></i></button>
+                                <button class="btn btn-primary btn-sm" data-edit="${user.id}" ><i class="fa-solid fa-pencil"></i></button>
+                              </td>
                             </tr>`
 })
+
+  totalHTML.innerText = `$ ${total}`
+
+  // Una vez que pintamos la tabla obtenemos todos los botones con el atributo data-edit y se lo asignamos a la variable userButtonsEdit
+  updateEditButtons()
 }
+
+function updateEditButtons()  {
+
+  userButtonsEdit = document.querySelectorAll('button[data-edit]');
+
+  userButtonsEdit.forEach((btn) => {
+
+    btn.addEventListener('click', (evt) => {
+
+      const id = evt.currentTarget.dataset.edit
+
+      
+      completeUserForm(id)
+    })
+  })
+}
+
+function completeUserForm(idUser) {
+
+  console.log(`Complete FORM ${idUser}`)
+  // Buscar el usuario y obtenerlo para rellenar el formulario
+  const user = users.find((usr) => {
+    if(usr.id === idUser) {
+      return true
+    }
+  })
+  //conciderando el caso de no haber obtenido un usario y corto la funcion pero ademas informa el usuario de mi
+  if(!user) {
+    alert("No se encontro usuario")
+    return
+  }
+  // Rellenar el formulario
+  const el = userFormHTML.elements;
+
+  el.fullname.value = user.fullname;
+  el.email.value = user.email;
+  el.password.value = user.password;
+  el["password-repeat"].value = user.password;
+  el.location.value = user.location;
+  el.image.value = user.image;
+  el.active.cheked = user.active
+  el.bornDate.valueAsNumber = user.bornDate
+}
+
+
+function deleteUser (idUser){
+// deberia buscar el indice de ese elemento en el array
+const indice = users.findIndex((usr) =>{
+  // Voy a checkear cuando el idUser que es la persona que quiero borrar coincida con el id de mi usr
+  if(usr.id === idUser) {
+    return true
+  }
+})
+//contemplar si el usuario no existia
+  if(indice === -1){
+    Swal.fire({
+      title: "Error al borrar", 
+      text: "No se pudo borrar el usuario", 
+      icon: "error",
+      timer: 1500
+    })
+    return
+  }
+// deberia eliminar ese elemento del array
+users.splice(indice, 1)
+// deberia volver a pintar la tabla
 renderUsers(users)
+}
 
 function inputSearch(evt) {
   //Tenemos que tomar lo que la persona ha escrito en el input
@@ -111,4 +239,6 @@ const filteredUsers = users.filter((usr) => {
 renderUsers(filteredUsers)
 }
 
+function sortAsc() {}
 
+function sortDesc() {}
